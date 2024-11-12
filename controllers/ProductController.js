@@ -61,9 +61,11 @@ app.put('/update', async (req,res) =>{
             }
         });
         const imagePath = './uploads/' + oldData.img;
+        if (oldData.img !== "") {
         if (fs.existsSync(imagePath)) {
             await fs.unlinkSync(imagePath);
         }
+    }
         await prisma.product.update({
             data: req.body,
             where:{
