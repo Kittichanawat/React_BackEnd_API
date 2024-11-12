@@ -9,32 +9,32 @@ const exceljs = require('exceljs');
 const { log } = require('console');
 dotenv.config();
 app.use(fileUpload());
-app.post('/create', async (req,res) => {
+app.post('/create', async (req, res) => {
     try {
-            await prisma.product.create({
+        await prisma.product.create({
             data: req.body,
         });
-        res.send({message: 'success'});
+        res.send({ message: 'success' });
     } catch (e) {
-        res.status(500).send({error: e.message});
-        
+        res.status(500).send({ error: e.message });
+
     }
 
 });
-app.get('/list', async (req,res) => {
+app.get('/list', async (req, res) => {
     try {
         const data = await prisma.product.findMany({
             orderBy: {
-                id:"desc"
+                id: "desc"
 
             },
             where: {
                 status: 'use'
             }
         })
-        res.send({results:data});
+        res.send({ results: data });
     } catch (e) {
-        res.status(500).send({error:e.message});
+        res.status(500).send({ error: e.message });
     }
 })
 app.delete('/remove/:id', async (req, res) => {
@@ -52,36 +52,36 @@ app.delete('/remove/:id', async (req, res) => {
         res.status(500).send({ error: e.message });
     }
 });
-app.put('/update', async (req,res) =>{
+app.put('/update', async (req, res) => {
     try {
         const fs = require('fs');
-        const oldData = await prisma.product.findFirst ({
-            where:{
+        const oldData = await prisma.product.findFirst({
+            where: {
                 id: parseInt(req.body.id)
             }
         });
         const imagePath = './uploads/' + oldData.img;
         if (oldData.img !== "") {
-        if (fs.existsSync(imagePath)) {
-            await fs.unlinkSync(imagePath);
+            if (fs.existsSync(imagePath)) {
+                await fs.unlinkSync(imagePath);
+            }
         }
-    }
         await prisma.product.update({
             data: req.body,
-            where:{
+            where: {
                 id: parseInt(req.body.id)
             }
         })
-        res.send({message:'success'})
+        res.send({ message: 'success' })
     } catch (e) {
-        res.status(500).send({error:e.message})
-        
+        res.status(500).send({ error: e.message })
+
     }
 })
-app.post('/upload', async (req,res) =>{
+app.post('/upload', async (req, res) => {
     try {
-        if (req.files != undefined){
-            if (req.files.img != undefined){
+        if (req.files != undefined) {
+            if (req.files.img != undefined) {
                 const img = req.files.img;
                 const fs = require('fs');
                 const myDate = new Date();
@@ -96,52 +96,62 @@ app.post('/upload', async (req,res) =>{
                 const ext = arrFileName[arrFileName.length - 1];
                 const newName = `${y}${m}${d}${h}${mi}${s}${ms}.${ext}`;
 
-                
-               img.mv('./uploads/' + newName, (err) => {
+
+                img.mv('./uploads/' + newName, (err) => {
                     if (err) throw err;
 
-                    return res.send({newName: newName});
+                    return res.send({ newName: newName });
                 })
             }
-              
+
         } else {
             res.status(501).send('notimplemented');
         }
-    
+
     } catch (e) {
-        res.status(500).send({error: e.message})
-    } 
+        res.status(500).send({ error: e.message })
+    }
 })
 app.post('/uploadFormExcel', async (req, res) => {
     try {
         const fileExcel = req.files.fileExcel;
-        await fileExcel.mv('./uploads/' + fileExcel.name);
+        if (fileExcel !== undefined) {
+            if (fileExcel !== null) {
 
-        const workbook = new exceljs.Workbook();
-        await workbook.xlsx.readFile('./uploads/' + fileExcel.name);
-        const ws = workbook.getWorksheet(1);
 
-        for (let i = 2; i <= ws.rowCount; i++) {
-            const name = ws.getRow(i).getCell(1).value ?? "";
-            const cost = ws.getRow(i).getCell(2).value ?? 0;
-            const price = ws.getRow(i).getCell(3).value ?? 0;
-            
-            if (name !=="" && cost >= 0 && price >= 0){
-                await prisma.product.create({
-                 data:{
-                    name: name,
-                    cost: cost,
-                    price: price,
-                    img: ''
+                await fileExcel.mv('./uploads/' + fileExcel.name);
+
+                const workbook = new exceljs.Workbook();
+                await workbook.xlsx.readFile('./uploads/' + fileExcel.name);
+                const ws = workbook.getWorksheet(1);
+
+                for (let i = 2; i <= ws.rowCount; i++) {
+                    const name = ws.getRow(i).getCell(1).value ?? "";
+                    const cost = ws.getRow(i).getCell(2).value ?? 0;
+                    const price = ws.getRow(i).getCell(3).value ?? 0;
+
+                    if (name !== "" && cost >= 0 && price >= 0) {
+                        await prisma.product.create({
+                            data: {
+                                name: name,
+                                cost: cost,
+                                price: price,
+                                img: ''
+                            }
+                        })
                     }
-                })
+                }
+                const fs = require('fs');
+                await fs.unlinkSync('./uploads/' + fileExcel.name);
+
+
+                res.send({ message: 'success' })
+            } else {
+                res.send({ message: 'file is null' });
             }
+        } else {
+            res.send({ message: 'file is undefined' });
         }
-        const fs = require('fs');
-        await fs.unlinkSync('./uploads/' + fileExcel.name);
-
-
-        res.send({ message: 'success' })
     } catch (e) {
         res.status(500).send({ error: e.message });
     }

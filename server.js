@@ -3,6 +3,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const userController = require('./controllers/UserController');
+const saleController = require('./controllers/SaleController');
 
 const productController = require('./controllers/ProductController');
 app.use(bodyParser.json());
@@ -12,5 +13,5 @@ app.use('/uploads',express.static('./uploads'));
 
 app.use("/user", userController);
 app.use('/product', productController);
-
+app.use('/api/sale', saleController);
 app.listen(3001);
