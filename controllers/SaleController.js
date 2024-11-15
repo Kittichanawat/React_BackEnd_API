@@ -117,7 +117,7 @@ app.get('/dashboard', async (req, res) => {
         let arr = [];
         let myDate = new Date();
         let year = myDate.getFullYear();
-        for (let i = 1; i < 12; i++) {
+        for (let i = 1; i < 13; i++) {
         const daysInMonth = new Date(year, i, 0).getDate();
             const billSaleInMonth = await prisma.billSale.findMany({
                 where: {
